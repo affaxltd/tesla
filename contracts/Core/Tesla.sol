@@ -114,6 +114,8 @@ contract Tesla is Context {
   }
 
   function syntheticsOut(uint256 _amountIn) public view returns (uint256 amount) {
+    if (marketClosed()) return 0;
+
     bytes32[] memory keys = new bytes32[](2);
     keys[0] = sUSDKey;
     keys[1] = sTSLAKey;
