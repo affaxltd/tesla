@@ -152,11 +152,4 @@ contract(`Test $TESLA contract`, async (accounts) => {
         Math.round((parseFloat(ethers.utils.formatEther(parseInt(balance).toString())) + Number.EPSILON) * 100) / 100
     );
   });
-
-  pool("Should return valid amounts for swap amounts", async (_, __) => {
-    const amount = parseTokens(20000);
-
-    assert.notEqual(0, parseInt(await tesla.balancerOut(amount)));
-    assert.notEqual(0, parseInt(await tesla.syntheticsOut(amount)));
-  });
 });
