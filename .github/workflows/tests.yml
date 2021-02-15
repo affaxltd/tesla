@@ -6,6 +6,10 @@ jobs:
   test:
     name: Test Tesla
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        chain: [kovan, fork]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -25,4 +29,4 @@ jobs:
           yarn
       - name: "Run tests"
         run: |
-          yarn test:fork
+          yarn test:${{ chain }}

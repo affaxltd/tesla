@@ -1,7 +1,7 @@
 const { accountPool, parseTokens, drain, useApproval, hoursToSeconds } = require("./_tools.js");
 const { ethers } = require("ethers");
 
-const { usdcAddress } = require("./_constants");
+const { mainArgs, testArgs } = require("../lib/args.js");
 
 const IERC20Approvable = artifacts.require("IERC20Approvable");
 const IDelegator = artifacts.require("IDelegator");
@@ -18,14 +18,20 @@ contract(`Test $TESLA contract`, async (accounts) => {
   let stsla;
   let usdc;
 
+  const args = process.argv;
+  const isTestnet = args.join(" ").includes("kovan");
+
   async function setupCoreProtocol() {
     if (setup) return;
     setup = true;
+    const argList = isTestnet ? testArgs : mainArgs;
 
-    tesla = await Tesla.new();
-    delegator = await IDelegator.at("0x15fd6e554874b9e70f832ed37f231ac5e142362f");
-    stsla = await IERC20.at("0x918dA91Ccbc32B7a6A0cc4eCd5987bbab6E31e6D");
-    usdc = await IERC20Approvable.at(usdcAddress);
+    tesla = await Tesla.new(...argList, { gas: 2000000 });
+    delegator = await IDelegator.at(
+      !isTestnet ? "0x15fd6e554874b9e70f832ed37f231ac5e142362f" : "0xB8CFB40B4c66533cD8f760c1b15cc228452bB03E"
+    );
+    stsla = await IERC20.at(argList[2]);
+    usdc = await IERC20Approvable.at(argList[0]);
   }
 
   beforeEach(async () => {
@@ -33,9 +39,15 @@ contract(`Test $TESLA contract`, async (accounts) => {
   });
 
   pool("Should successfully swap USDC to sTSLA", async (account, _) => {
-    const baseAmount = 10000;
-    const amount = parseTokens(baseAmount, 6);
-    await drain(usdc, "0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8", account, amount);
+    const baseAmount = isTestnet ? 100 : 10000;
+    const amount = parseTokens(baseAmount, isTestnet ? 18 : 6);
+
+    await drain(
+      usdc,
+      !isTestnet ? "0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8" : "0x175023d52584a5E29e6c33e88592851359941508",
+      account,
+      amount
+    );
 
     const deadline = Math.round(new Date().getTime() / 1000 + hoursToSeconds(48));
 
@@ -91,8 +103,8 @@ contract(`Test $TESLA contract`, async (accounts) => {
               domain: {
                 version: "2",
                 name: "USD Coin",
-                chainId: 1,
-                verifyingContract: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+                chainId: !isTestnet ? 1 : 42,
+                verifyingContract: usdc.address,
               },
               primaryType: "Permit",
               message: {
@@ -146,10 +158,10 @@ contract(`Test $TESLA contract`, async (accounts) => {
     console.log("");
 
     const balance = await stsla.balanceOf(account);
+
     assert.notEqual(0, parseInt(balance));
     console.log(
-      "Final $sTSLA Balance: " +
-        Math.round((parseFloat(ethers.utils.formatEther(parseInt(balance).toString())) + Number.EPSILON) * 100) / 100
+      `Final $sTSLA Balance: ${parseFloat(ethers.utils.formatEther(parseInt(balance).toString())).toFixed(6)}`
     );
   });
 });

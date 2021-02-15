@@ -100,7 +100,7 @@ contract Tesla is Context {
 
     if (isTestnet) {
       // Swap USDC for sUSDC on Balancer
-      BalancerPool.swapExactAmountIn(address(USDC), _sourceAmount, address(sUSD), 0, uint256(-1));
+      TestnetPool.swapExactAmountIn(address(USDC), _sourceAmount, address(sUSD), 0, uint256(-1));
     } else {
       // Exchange USDC to sUSD on Curve
       Curve.exchange(

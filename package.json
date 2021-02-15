@@ -12,8 +12,11 @@
     "deploy:fork": "yarn truffle deploy --network fork",
     "console:fork": "yarn truffle console --network fork",
     "run:forks": "yarn run:fork --quiet",
+    "run:kovan_forks": "yarn run:kovan_fork --quiet",
     "run:fork": "yarn ganache-cli --fork https://mainnet.infura.io/v3/bd0c2cf1b7de43c9a3a70ce2f577d29c --forkCacheSize -1 --keepAliveTimeout 10000 --defaultBalanceEther 1000 --gasPrice 1000000000 --gasLimit 20000000 --chainId 1 --networkId 1 --unlock \"0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8\"",
-    "test:fork": "yarn concurrently --success first --kill-others \"yarn run:forks\" \"yarn truffle test --network fork ./test/tesla.js\""
+    "run:kovan_fork": "yarn ganache-cli --fork https://kovan.infura.io/v3/bd0c2cf1b7de43c9a3a70ce2f577d29c --forkCacheSize -1 --keepAliveTimeout 10000 --defaultBalanceEther 1000 --gasPrice 1000000000 --gasLimit 20000000 --chainId 42 --networkId 42 --unlock \"0x175023d52584a5E29e6c33e88592851359941508\"",
+    "test:fork": "yarn concurrently --success first --kill-others \"yarn run:forks\" \"yarn truffle test --network fork ./test/tesla.js\"",
+    "test:kovan": "yarn concurrently --success first --kill-others \"yarn run:kovan_forks\" \"yarn truffle test --network kovan_fork ./test/tesla.js\""
   },
   "dependencies": {
     "@openzeppelin/contracts": "^3.3.0",
