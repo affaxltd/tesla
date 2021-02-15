@@ -33,17 +33,20 @@ contract Tesla is Context {
   using SafeERC20 for IERC20;
   using SafeMath for uint256;
 
+  // Tokens
+  IERC20Approvable public USDC;
+  IERC20 public sUSD;
+  IERC20 public sTSLA;
+
   // External
-  IExchangeRates public constant ExchangeRates = IExchangeRates(0xd69b189020EF614796578AfE4d10378c5e7e1138);
-  IBalancerPool public constant BalancerPool = IBalancerPool(0x055dB9AFF4311788264798356bbF3a733AE181c6);
-  ISystemStatus public constant SystemStatus = ISystemStatus(0x1c86B3CDF2a60Ae3a574f7f71d44E2C50BDdB87E);
-  IExchanger public constant Exchanger = IExchanger(0x97767D7D04Fd0dB0A1a2478DCd4BA85290556B48);
+  IExchangeRates public ExchangeRates;
+  IBalancerPool public BalancerPool;
+  IBalancerPool public TestnetPool;
+  ISystemStatus public SystemStatus;
+  IExchanger public Exchanger;
   ICurve public constant Curve = ICurve(0xA5407eAE9Ba41422680e2e00537571bcC53efBfD);
 
-  // Tokens
-  IERC20Approvable public constant USDC = IERC20Approvable(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
-  IERC20 public constant sUSD = IERC20(0x57Ab1ec28D129707052df4dF418D58a2D46d5f51);
-  IERC20 public constant sTSLA = IERC20(0x918dA91Ccbc32B7a6A0cc4eCd5987bbab6E31e6D);
+  bool public isTestnet;
 
   // Synthetix asset keys
   bytes32 public constant sTSLAKey = bytes32(0x7354534c41000000000000000000000000000000000000000000000000000000);
@@ -51,9 +54,35 @@ contract Tesla is Context {
 
   receive() external payable {}
 
-  constructor() public {
+  constructor(
+    address _usdcAddress,
+    address _susdAddress,
+    address _stslaAddress,
+    address _exchangeRatesAddress,
+    address _poolAddress,
+    address _tesnetPoolAddress,
+    address _systemStatusAddress,
+    address _synthetixAddress,
+    bool _isTestnet
+  ) public {
+    USDC = IERC20Approvable(_usdcAddress);
+    sUSD = IERC20(_susdAddress);
+    sTSLA = IERC20(_stslaAddress);
+
+    ExchangeRates = IExchangeRates(_exchangeRatesAddress);
+    BalancerPool = IBalancerPool(_poolAddress);
+    TestnetPool = IBalancerPool(_tesnetPoolAddress);
+    SystemStatus = ISystemStatus(_systemStatusAddress);
+    Exchanger = IExchanger(_synthetixAddress);
+
+    isTestnet = _isTestnet;
+
     USDC.safeApprove(address(Curve), uint256(-1));
-    sUSD.safeApprove(address(BalancerPool), uint256(-1));
+    sUSD.safeApprove(_poolAddress, uint256(-1));
+
+    if (_isTestnet) {
+      USDC.safeApprove(_tesnetPoolAddress, uint256(-1));
+    }
   }
 
   function exchange(
@@ -69,13 +98,18 @@ contract Tesla is Context {
     // Transfer in USDC
     USDC.safeTransferFrom(_msgSender(), address(this), _sourceAmount);
 
-    // Exchange USDC to sUSD on Curve
-    Curve.exchange(
-      1, // USDC
-      3, // sUSD
-      _sourceAmount,
-      0
-    );
+    if (isTestnet) {
+      // Swap USDC for sUSDC on Balancer
+      BalancerPool.swapExactAmountIn(address(USDC), _sourceAmount, address(sUSD), 0, uint256(-1));
+    } else {
+      // Exchange USDC to sUSD on Curve
+      Curve.exchange(
+        1, // USDC
+        3, // sUSD
+        _sourceAmount,
+        0
+      );
+    }
 
     uint256 exchangedAmount = sUSD.balanceOf(address(this));
 

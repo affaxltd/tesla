@@ -15,7 +15,7 @@ module.exports = {
     kovan: {
       provider: () => new HDWalletProvider(env.MEMO, env.KINFURA),
       gas: 2500000,
-      gasPrice: 75000000000,
+      gasPrice: 7000000000,
       network_id: 42,
     },
     mainnet: {
