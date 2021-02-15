@@ -7,7 +7,6 @@ jobs:
     name: Test Tesla
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
         chain: [kovan, fork]
     steps:
@@ -29,4 +28,4 @@ jobs:
           yarn
       - name: "Run tests"
         run: |
-          yarn test:${{ chain }}
+          yarn test:${{ matrix.chain }}
