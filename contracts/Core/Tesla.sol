@@ -54,6 +54,8 @@ contract Tesla is Context {
 
   receive() external payable {}
 
+  event Swap(address indexed from, uint256 usdcIn, uint256 tslaOut);
+
   constructor(
     address _usdcAddress,
     address _susdAddress,
@@ -131,6 +133,8 @@ contract Tesla is Context {
       sUSD.safeTransfer(_msgSender(), exchangedAmount);
       amountReceived = Exchanger.exchangeOnBehalf(_msgSender(), sUSDKey, exchangedAmount, sTSLAKey);
     }
+
+    emit Swap(_msgSender(), _sourceAmount, amountReceived);
   }
 
   function marketClosed() public view returns (bool closed) {
@@ -138,23 +142,45 @@ contract Tesla is Context {
   }
 
   function balancerOut(uint256 _amountIn) public view returns (uint256 amount) {
+    uint256 susd = susdOut(_amountIn);
+
     uint256 sUSDAmount = BalancerPool.getBalance(address(sUSD));
     uint256 sTSLAAmount = BalancerPool.getBalance(address(sTSLA));
     uint256 sUSDWeight = BalancerPool.getDenormalizedWeight(address(sUSD));
     uint256 sTSLAWeight = BalancerPool.getDenormalizedWeight(address(sTSLA));
     uint256 fee = BalancerPool.getSwapFee();
 
-    amount = BalancerPool.calcOutGivenIn(sUSDAmount, sUSDWeight, sTSLAAmount, sTSLAWeight, _amountIn, fee);
+    amount = BalancerPool.calcOutGivenIn(sUSDAmount, sUSDWeight, sTSLAAmount, sTSLAWeight, susd, fee);
   }
 
   function syntheticsOut(uint256 _amountIn) public view returns (uint256 amount) {
     if (marketClosed()) return 0;
+
+    uint256 susd = susdOut(_amountIn);
 
     bytes32[] memory keys = new bytes32[](2);
     keys[0] = sUSDKey;
     keys[1] = sTSLAKey;
 
     uint256[] memory rates = ExchangeRates.ratesForCurrencies(keys);
-    return _amountIn.mul(rates[0]).div(rates[1]);
+    return susd.mul(rates[0]).div(rates[1]);
+  }
+
+  function susdOut(uint256 _amountIn) public view returns (uint256 amount) {
+    if (isTestnet) {
+      uint256 usdcAmount = TestnetPool.getBalance(address(USDC));
+      uint256 sUSDAmount = TestnetPool.getBalance(address(sUSD));
+      uint256 usdcWeight = TestnetPool.getDenormalizedWeight(address(USDC));
+      uint256 sUSDWeight = TestnetPool.getDenormalizedWeight(address(sUSD));
+      uint256 fee = BalancerPool.getSwapFee();
+
+      amount = BalancerPool.calcOutGivenIn(usdcAmount, usdcWeight, sUSDAmount, sUSDWeight, _amountIn, fee);
+    } else {
+      amount = Curve.get_dy(
+        1, // USDC
+        3, // sUSD,
+        _amountIn
+      );
+    }
   }
 }
