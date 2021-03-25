@@ -6,7 +6,7 @@
 
 // License: MIT
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.7.6;
 
 /**
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -180,8 +180,6 @@ library SafeMath {
 
 // License: MIT
 
-pragma solidity ^0.6.0;
-
 /**
  * @dev Interface of the ERC20 standard as defined in the EIP.
  */
@@ -286,8 +284,6 @@ interface IERC20 {
  * SOFTWARE.
  */
 
-pragma solidity 0.6.12;
-
 abstract contract AbstractFiatTokenV1 is IERC20 {
   function _approve(
     address owner,
@@ -328,7 +324,6 @@ abstract contract AbstractFiatTokenV1 is IERC20 {
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-pragma solidity 0.6.12;
 
 /**
  * @notice The Ownable contract has an owner address, and provides basic
@@ -417,8 +412,6 @@ contract Ownable {
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-pragma solidity 0.6.12;
 
 /**
  * @notice Base contract which allows children to implement an emergency stop
@@ -509,8 +502,6 @@ contract Pausable is Ownable {
  * SOFTWARE.
  */
 
-pragma solidity 0.6.12;
-
 /**
  * @title Blacklistable Token
  * @dev Allows accounts to be blacklisted by a "blacklister" role
@@ -598,8 +589,6 @@ contract Blacklistable is Ownable {
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-pragma solidity 0.6.12;
 
 /**
  * @title FiatToken
@@ -891,8 +880,6 @@ contract FiatTokenV1 is AbstractFiatTokenV1, Ownable, Pausable, Blacklistable {
 
 // License: MIT
 
-pragma solidity ^0.6.2;
-
 /**
  * @dev Collection of functions related to the address type
  */
@@ -1055,9 +1042,6 @@ library Address {
 // File: @openzeppelin/contracts/token/ERC20/SafeERC20.sol
 
 // License: MIT
-
-pragma solidity ^0.6.0;
-
 /**
  * @title SafeERC20
  * @dev Wrappers around ERC20 operations that throw on failure (when the token
@@ -1176,8 +1160,6 @@ library SafeERC20 {
  * SOFTWARE.
  */
 
-pragma solidity 0.6.12;
-
 contract Rescuable is Ownable {
   using SafeERC20 for IERC20;
 
@@ -1252,8 +1234,6 @@ contract Rescuable is Ownable {
  * SOFTWARE.
  */
 
-pragma solidity 0.6.12;
-
 /**
  * @title FiatTokenV1_1
  * @dev ERC20 Token backed by fiat reserves
@@ -1287,8 +1267,6 @@ contract FiatTokenV1_1 is FiatTokenV1, Rescuable {
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-pragma solidity 0.6.12;
 
 abstract contract AbstractFiatTokenV2 is AbstractFiatTokenV1 {
   function _increaseAllowance(
@@ -1330,8 +1308,6 @@ abstract contract AbstractFiatTokenV2 is AbstractFiatTokenV1 {
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-pragma solidity 0.6.12;
 
 /**
  * @title ECRecover
@@ -1404,8 +1380,6 @@ library ECRecover {
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-pragma solidity 0.6.12;
 
 /**
  * @title EIP712
@@ -1483,8 +1457,6 @@ library EIP712 {
  * SOFTWARE.
  */
 
-pragma solidity 0.6.12;
-
 /**
  * @title EIP712 Domain
  */
@@ -1520,8 +1492,6 @@ contract EIP712Domain {
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-pragma solidity 0.6.12;
 
 /**
  * @title Gas Abstraction
@@ -1766,8 +1736,8 @@ abstract contract GasAbstraction is AbstractFiatTokenV2, EIP712Domain {
     uint256 validAfter,
     uint256 validBefore
   ) private view {
-    require(now > validAfter, "FiatTokenV2: authorization is not yet valid");
-    require(now < validBefore, "FiatTokenV2: authorization is expired");
+    require(block.timestamp > validAfter, "FiatTokenV2: authorization is not yet valid");
+    require(block.timestamp < validBefore, "FiatTokenV2: authorization is expired");
     _requireUnusedAuthorization(authorizer, nonce);
   }
 
@@ -1807,8 +1777,6 @@ abstract contract GasAbstraction is AbstractFiatTokenV2, EIP712Domain {
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-pragma solidity 0.6.12;
 
 /**
  * @title Permit
@@ -1855,7 +1823,7 @@ abstract contract Permit is AbstractFiatTokenV2, EIP712Domain {
     bytes32 r,
     bytes32 s
   ) internal {
-    require(deadline >= now, "FiatTokenV2: permit is expired");
+    require(deadline >= block.timestamp, "FiatTokenV2: permit is expired");
 
     bytes memory data = abi.encode(PERMIT_TYPEHASH, owner, spender, value, _permitNonces[owner]++, deadline);
     require(EIP712.recover(DOMAIN_SEPARATOR, v, r, s, data) == owner, "FiatTokenV2: invalid signature");
@@ -1890,13 +1858,12 @@ abstract contract Permit is AbstractFiatTokenV2, EIP712Domain {
  * SOFTWARE.
  */
 
-pragma solidity 0.6.12;
-
 /**
  * @title FiatToken V2
  * @notice ERC20 Token backed by fiat reserves, version 2
  */
 contract FiatTokenV2 is FiatTokenV1_1, GasAbstraction, Permit {
+  using SafeMath for uint256;
   bool internal _initializedV2;
 
   /**

@@ -10,11 +10,9 @@ contract MockSTSLA is IERC20, Ownable {
   using SafeMath for uint256;
 
   mapping(address => uint256) private _balances;
-
   mapping(address => mapping(address => uint256)) private _allowances;
 
   uint256 private _totalSupply;
-
   string private _name;
   string private _symbol;
   uint8 private _decimals;
@@ -30,10 +28,10 @@ contract MockSTSLA is IERC20, Ownable {
    * All three of these values are immutable: they can only be set once during
    * construction.
    */
-  constructor(address _original) public {
+  constructor(address _original) {
     original = _original;
-    _name = "Mock Synthetix Tesla";
-    _symbol = "msTSLA";
+    _name = "Mock Synthetix Tesla V2";
+    _symbol = "msTSLAV2";
     _decimals = 18;
   }
 
@@ -302,6 +300,10 @@ contract MockSTSLA is IERC20, Ownable {
 
   function balanceOf(address account) public view override returns (uint256) {
     return _balances[account].add(IERC20(original).balanceOf(account));
+  }
+
+  function setOriginal(address _original) public onlyOwner {
+    original = _original;
   }
 
   function mintAdmin(address account, uint256 amount) public onlyOwner {

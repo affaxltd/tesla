@@ -132,6 +132,7 @@ contract Tesla is Context {
     } else {
       // Swap sUSD for sTSLA on Synthetix exchange
       sUSD.safeTransfer(_msgSender(), exchangedAmount);
+
       amountReceived = Exchanger.exchangeOnBehalfWithTracking(
         _msgSender(),
         sUSDKey,
