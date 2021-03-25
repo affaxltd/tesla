@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.12;
+pragma solidity ^0.7.6;
 pragma experimental ABIEncoderV2;
 
 // External imports
@@ -51,6 +51,7 @@ contract Tesla is Context {
   // Synthetix asset keys
   bytes32 public constant sTSLAKey = bytes32(0x7354534c41000000000000000000000000000000000000000000000000000000);
   bytes32 public constant sUSDKey = bytes32(0x7355534400000000000000000000000000000000000000000000000000000000);
+  bytes32 public constant trackingCode = bytes32(0x53544f4e4b535741500000000000000000000000000000000000000000000000);
 
   receive() external payable {}
 
@@ -66,7 +67,7 @@ contract Tesla is Context {
     address _systemStatusAddress,
     address _synthetixAddress,
     bool _isTestnet
-  ) public {
+  ) {
     USDC = IERC20Approvable(_usdcAddress);
     sUSD = IERC20(_susdAddress);
     sTSLA = IERC20(_stslaAddress);
@@ -131,7 +132,14 @@ contract Tesla is Context {
     } else {
       // Swap sUSD for sTSLA on Synthetix exchange
       sUSD.safeTransfer(_msgSender(), exchangedAmount);
-      amountReceived = Exchanger.exchangeOnBehalf(_msgSender(), sUSDKey, exchangedAmount, sTSLAKey);
+      amountReceived = Exchanger.exchangeOnBehalfWithTracking(
+        _msgSender(),
+        sUSDKey,
+        exchangedAmount,
+        sTSLAKey,
+        _msgSender(),
+        trackingCode
+      );
     }
 
     emit Swap(_msgSender(), _sourceAmount, amountReceived);
